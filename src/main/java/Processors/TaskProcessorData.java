@@ -1,11 +1,12 @@
 package Processors;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TaskProcessorData {
-    private List<Task> tasks;
-    private Integer taskNumber;
-    private Integer processorNumber;
+    private final List<Task> tasks;
+    private final Integer taskNumber;
+    private final Integer processorNumber;
 
     public TaskProcessorData(List<Task> tasks, Integer taskNumber, Integer processorNumber) {
         this.tasks = tasks;
@@ -14,7 +15,7 @@ public class TaskProcessorData {
     }
 
     public List<Task> getTasks() {
-        return tasks;
+        return new ArrayList<>(tasks);
     }
 
     public Integer getTaskNumber() {
