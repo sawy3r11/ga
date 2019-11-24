@@ -2,11 +2,19 @@ package Processors;
 
 public class Task {
     //task number
-    public int task;
-    public int[] times;
+    private final int taskNumber;
+    private final int[] times;
 
     public Task(int task, int[] times) {
-        this.task = task;
+        this.taskNumber = task;
         this.times = times;
+    }
+
+    public int getTaskNumber() {
+        return taskNumber;
+    }
+
+    public int[] getTimes() {
+        return times.clone();
     }
 }
