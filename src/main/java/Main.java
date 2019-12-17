@@ -18,16 +18,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Main {
-    private static final String DATA = "data2.txt";
+    private static final String DATA = "data3.txt";
     private static final Logger logger = Logger.getLogger(Main.class.getName());
     // Genetic algorithm's initialization parameters
-    private static final int POPULATION_SIZE = 1000;
-    private static final int TOURNAMENT_SIZE = 5;
-    private static final double MUTATION_PROBABILITY = 0.115;
-    private static final double CROSSOVER_PROBABILITY = 0.16;
+    private static final int POPULATION_SIZE = 4536;
+    // Amount of chromosomes that are taken for tournament selection, winner will be taken as survivor
+    private static final int TOURNAMENT_SIZE = 10;
+    private static final double MUTATION_PROBABILITY = 0.001;
+    private static final double CROSSOVER_PROBABILITY = 0.1;
     // Genetic algorithm end's condition parameters
-    private static final int MAX_STALE_GENERATIONS_RESULT = 7;
-    private static final int MAX_NUMBER_OF_GENERATIONS = 100;
+    private static final int MAX_STALE_GENERATIONS_RESULT = 81;
+    private static final int MAX_NUMBER_OF_GENERATIONS = 1000;
 
     public static void main(String... args) {
         // Load resource data for wrapper class
@@ -47,13 +48,33 @@ public class Main {
          * Each gene is represent by processor number */
         IntegerChromosome integerGenes = IntegerChromosome.of(0, taskProcessorData.getProcessorNumber() - 1, taskProcessorData.getTaskNumber());
         // Initialize genetic algorithm's engine
-        Engine<IntegerGene, Integer> engine = prepare(taskFF, integerGenes);
-        // Statistics for more information about the results
-        EvolutionStatistics<Integer, ?> statistics = EvolutionStatistics.ofNumber();
-        // Find best result
-        Phenotype<IntegerGene, Integer> best = calculate(engine, statistics);
-        logger.log(Level.INFO, "--- Statistics --- \n\n {0} \n\n", new Object[]{statistics});
-        logger.log(Level.INFO, "--- Best --- \n\n {0}", new Object[]{best});
+        long sumOfGenerations = 0;
+        double sumOfEvolveDuration = 0;
+        long sumOfBestGenerations = 0;
+        Integer sumOfBestFitness = 0;
+        for (double changingParameter = MUTATION_PROBABILITY; changingParameter <= MUTATION_PROBABILITY * 10; changingParameter += 0.002) {
+            for (int i = 0; i < 10; i++) {
+                Engine<IntegerGene, Integer> engine = prepare(taskFF, integerGenes, changingParameter);
+                // Statistics for more information about the results
+                EvolutionStatistics<Integer, ?> statistics = EvolutionStatistics.ofNumber();
+                // Find best result
+                Phenotype<IntegerGene, Integer> best = calculate(engine, statistics);
+                sumOfGenerations += statistics.getAltered().getCount();
+                sumOfEvolveDuration += statistics.getEvolveDuration().getSum();
+                sumOfBestGenerations += best.getGeneration();
+                sumOfBestFitness += best.getFitness();
+            }
+            logger.log(Level.INFO, "--- Population size {0} ---", new Object[]{changingParameter});
+            logger.log(Level.INFO, "Amount of generations {0}", new Object[]{sumOfGenerations / 10});
+            logger.log(Level.INFO, "Time {0}", new Object[]{sumOfEvolveDuration / 10.});
+            logger.log(Level.INFO, "Generation number {0}", new Object[]{sumOfBestGenerations / 10});
+            logger.log(Level.INFO, "Fitness {0}", new Object[]{sumOfBestFitness / 10});
+            logger.log(Level.INFO, "--------");
+            sumOfGenerations = 0;
+            sumOfEvolveDuration = 0;
+            sumOfBestGenerations = 0;
+            sumOfBestFitness = 0;
+        }
     }
 
     private static TaskProcessorData loadResourceData() {
@@ -88,12 +109,13 @@ public class Main {
         }
     }
 
-    private static Engine<IntegerGene, Integer> prepare(TaskFF taskFF, IntegerChromosome integerGenes) {
+    private static Engine<IntegerGene, Integer> prepare(TaskFF taskFF, IntegerChromosome integerGenes, double changingParameter) {
         return Engine.builder(taskFF, integerGenes)
+                .optimize(Optimize.MINIMUM)
                 .populationSize(POPULATION_SIZE)
                 .survivorsSelector(new TournamentSelector<>(TOURNAMENT_SIZE))
                 .offspringSelector(new RouletteWheelSelector<>())
-                .alterers(new Mutator<>(MUTATION_PROBABILITY), new SinglePointCrossover<>(CROSSOVER_PROBABILITY))
+                .alterers(new Mutator<>(changingParameter), new SinglePointCrossover<>(CROSSOVER_PROBABILITY))
                 .build();
     }
 

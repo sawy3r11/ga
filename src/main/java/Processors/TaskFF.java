@@ -32,8 +32,7 @@ public class TaskFF implements Function<Genotype<IntegerGene>, Integer> {
             processorTaskTimeMap.computeIfPresent(processor, (processorNumber, currentTaskTime) -> currentTaskTime + taskTime);
         }
         // Find the longest processing time
-        int time = processorTaskTimeMap.size() > 0 ? processorTaskTimeMap.values().stream().mapToInt(Integer::intValue).max().getAsInt() : 0;
+        return processorTaskTimeMap.size() > 0 ? processorTaskTimeMap.values().stream().mapToInt(Integer::intValue).max().getAsInt() : 0;
         // Return time with minus (longer time, smaller value)
-        return -time;
     }
 }
